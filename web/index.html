@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>Shree · admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sky: #3FB4F3;
+    --deep: #15528A;
+    --soft: #E2F4FD;
+    --canvas: #F2FAFE;
+    --card: #ffffff;
+    --ink: #15528A;
+    --muted: #6b93b5;
+    --danger: #b23a48;
+    --ok: #2bbe86;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--canvas);
+    padding: 16px 16px calc(40px + env(safe-area-inset-bottom));
+    max-width: 640px;
+    margin-inline: auto;
+  }
+  h1 { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 26px; margin: 8px 0 2px; display: flex; align-items: center; gap: 10px; }
+  .glyph { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 12px; background: var(--card); border: 2.5px solid var(--deep); font-family: 'Baloo 2'; font-weight: 800; font-size: 22px; box-shadow: 3px 3px 0 var(--sky); }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+  .card { position: relative; background: var(--card); border: 2.5px solid var(--deep); border-radius: 16px; padding: 16px; margin-bottom: 22px; box-shadow: 4px 4px 0 var(--sky); }
+  .card h2 { font-family: 'Baloo 2'; font-weight: 700; font-size: 18px; margin: 0 0 12px; }
+  label { display: block; font-weight: 700; font-size: 13px; margin: 10px 0 5px; color: var(--deep); }
+  input, textarea, select {
+    width: 100%; font-family: 'Nunito'; font-size: 16px; color: var(--ink);
+    padding: 11px 12px; border: 2px solid var(--sky); border-radius: 12px; background: #fff; outline: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--deep); }
+  textarea { min-height: 90px; resize: vertical; line-height: 1.5; }
+  button {
+    font-family: 'Baloo 2'; font-weight: 700; font-size: 16px; color: #fff; background: var(--deep);
+    border: none; border-radius: 12px; padding: 12px 18px; margin-top: 14px; cursor: pointer; width: 100%;
+  }
+  button:active { transform: scale(0.99); }
+  button[disabled] { opacity: .5; }
+  .msg { font-size: 13px; font-weight: 700; margin-top: 10px; min-height: 18px; }
+  .msg.ok { color: var(--ok); }
+  .msg.err { color: var(--danger); }
+  .recent-item { border: 2px solid var(--soft); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .recent-item .meta { font-size: 11px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; color: var(--sky); }
+  .recent-item .body { font-size: 14px; margin-top: 3px; white-space: pre-wrap; }
+  .pill { display: inline-block; background: var(--soft); color: var(--deep); border: 2px solid var(--deep); border-radius: 999px; font-size: 11px; font-weight: 700; padding: 1px 9px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .tabs button { width: auto; flex: 1; margin: 0; background: #fff; color: var(--muted); border: 2px solid var(--soft); font-size: 14px; padding: 9px 6px; }
+  .tabs button.on { background: var(--soft); color: var(--deep); border-color: var(--deep); }
+  .hide { display: none; }
+  .tiny { font-size: 12px; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+  <h1><span class="glyph">श्री</span> admin</h1>
+  <p class="sub">from Shishir — notes &amp; letters for Reetu</p>
+
+  <div class="tabs">
+    <button data-tab="note" class="on">Daily note</button>
+    <button data-tab="letter">Open when…</button>
+  </div>
+
+  <!-- Daily note -->
+  <section id="tab-note">
+    <div class="card">
+      <h2>Write a daily note</h2>
+      <label for="note-date">Show on</label>
+      <input type="date" id="note-date" />
+      <label for="note-body">Message</label>
+      <textarea id="note-body" placeholder="good morning, Reetu…"></textarea>
+      <button id="note-save">Save note</button>
+      <div class="msg" id="note-msg"></div>
+      <p class="tiny">Tip: pick future dates to schedule notes ahead of time.</p>
+    </div>
+    <div class="card">
+      <h2>Recent notes</h2>
+      <div id="note-recent"><p class="tiny">loading…</p></div>
+    </div>
+  </section>
+
+  <!-- Open-when letter -->
+  <section id="tab-letter" class="hide">
+    <div class="card">
+      <h2>Write an "open when…" letter</h2>
+      <label for="letter-trigger">Open when she…</label>
+      <select id="letter-trigger">
+        <option value="is sad">is sad</option>
+        <option value="cant sleep">can't sleep</option>
+        <option value="misses you">misses you</option>
+        <option value="before an exam">has an exam</option>
+        <option value="needs a smile">needs a smile</option>
+      </select>
+      <label for="letter-title">Title</label>
+      <input id="letter-title" placeholder="for your hard days" />
+      <label for="letter-body">Letter</label>
+      <textarea id="letter-body" placeholder="my Reetu…"></textarea>
+      <button id="letter-save">Save letter</button>
+      <div class="msg" id="letter-msg"></div>
+    </div>
+    <div class="card">
+      <h2>Your letters</h2>
+      <div id="letter-recent"><p class="tiny">loading…</p></div>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://chbrjktgdjtstdhlwehy.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_8nmP3F3MlifKL1xyqsCwXA_uJBZg4Mp";
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => (s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    function fmtDate(d) { try { return new Date(d).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" }); } catch { return d; } }
+    function setMsg(el, text, ok) { el.textContent = text; el.className = "msg " + (ok ? "ok" : "err"); }
+
+    // tabs
+    document.querySelectorAll(".tabs button").forEach((b) => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("on", x === b));
+        $("tab-note").classList.toggle("hide", b.dataset.tab !== "note");
+        $("tab-letter").classList.toggle("hide", b.dataset.tab !== "letter");
+      });
+    });
+
+    // default date = today
+    $("note-date").value = new Date().toISOString().slice(0, 10);
+
+    // save note
+    $("note-save").addEventListener("click", async () => {
+      const body = $("note-body").value.trim();
+      const date = $("note-date").value;
+      if (!body) { setMsg($("note-msg"), "Write a message first.", false); return; }
+      $("note-save").disabled = true;
+      const { error } = await db.from("daily_notes").insert({ body, scheduled_date: date, author: "shishir" });
+      $("note-save").disabled = false;
+      if (error) { setMsg($("note-msg"), "Couldn't save: " + error.message, false); return; }
+      setMsg($("note-msg"), "Saved ✓", true);
+      $("note-body").value = "";
+      loadNotes();
+    });
+
+    // save letter
+    $("letter-save").addEventListener("click", async () => {
+      const title = $("letter-title").value.trim();
+      const bodyL = $("letter-body").value.trim();
+      const trigger = $("letter-trigger").value;
+      if (!title || !bodyL) { setMsg($("letter-msg"), "Add a title and a letter.", false); return; }
+      $("letter-save").disabled = true;
+      const { error } = await db.from("letters").insert({ title, body: bodyL, unlock_trigger: trigger });
+      $("letter-save").disabled = false;
+      if (error) { setMsg($("letter-msg"), "Couldn't save: " + error.message, false); return; }
+      setMsg($("letter-msg"), "Saved ✓", true);
+      $("letter-title").value = ""; $("letter-body").value = "";
+      loadLetters();
+    });
+
+    async function loadNotes() {
+      const { data, error } = await db.from("daily_notes").select("body,scheduled_date").order("scheduled_date", { ascending: false }).limit(10);
+      const box = $("note-recent");
+      if (error) { box.innerHTML = '<p class="tiny">couldn\'t load (' + esc(error.message) + ")</p>"; return; }
+      if (!data.length) { box.innerHTML = '<p class="tiny">no notes yet</p>'; return; }
+      box.innerHTML = data.map((n) => '<div class="recent-item"><div class="meta">' + fmtDate(n.scheduled_date) + '</div><div class="body">' + esc(n.body) + "</div></div>").join("");
+    }
+
+    async function loadLetters() {
+      const { data, error } = await db.from("letters").select("title,unlock_trigger,body").order("created_at", { ascending: false }).limit(10);
+      const box = $("letter-recent");
+      if (error) { box.innerHTML = '<p class="tiny">couldn\'t load (' + esc(error.message) + ")</p>"; return; }
+      if (!data.length) { box.innerHTML = '<p class="tiny">no letters yet</p>'; return; }
+      box.innerHTML = data.map((l) => '<div class="recent-item"><div class="meta">open when ' + esc(l.unlock_trigger) + '</div><div class="body"><b>' + esc(l.title) + "</b></div></div>").join("");
+    }
+
+    loadNotes();
+    loadLetters();
+  </script>
+</body>
+</html>
