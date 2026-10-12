@@ -1,0 +1,24 @@
+# Android / Gradle build output
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/.idea/
+android/*.iml
+*.apk
+*.aab
+
+# Machine-specific
+android/local.properties
+
+# Build tooling and scratch — not part of the app
+.tools/
+_iconbuild/
+shots/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Kotlin compiler cache
+android/.kotlin/
