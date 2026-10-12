@@ -66,5 +66,7 @@ dependencies {
     implementation("io.ktor:ktor-client-okhttp:3.0.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

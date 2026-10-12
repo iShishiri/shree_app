@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Shree</string>
+    <string name="widget_desc">Your Shree to-dos</string>
 </resources>

@@ -1,11 +1,16 @@
 package com.shishir.shree.ui
 
+import android.app.Application
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,11 +36,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shishir.shree.data.NewTodo
@@ -43,10 +50,13 @@ import com.shishir.shree.data.Todo
 import com.shishir.shree.ui.theme.CardWhite
 import com.shishir.shree.ui.theme.DeepBlue
 import com.shishir.shree.ui.theme.SkyBlue
+import androidx.glance.appwidget.updateAll
+import com.shishir.shree.widget.TodoWidget
+import com.shishir.shree.widget.TodoWidgetReceiver
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 
-class TodosViewModel : ViewModel() {
+class TodosViewModel(app: Application) : AndroidViewModel(app) {
     var todos by mutableStateOf<List<Todo>>(emptyList())
         private set
     var loading by mutableStateOf(true)
@@ -60,6 +70,12 @@ class TodosViewModel : ViewModel() {
     init { load() }
 
     private fun sorted(list: List<Todo>) = list.sortedBy { it.done }
+
+    private fun refreshWidget() {
+        viewModelScope.launch {
+            runCatching { TodoWidget().updateAll(getApplication<Application>()) }
+        }
+    }
 
     fun load() {
         viewModelScope.launch {
@@ -85,6 +101,7 @@ class TodosViewModel : ViewModel() {
                 Supabase.client.from("todos").insert(NewTodo(text))
                 draft = ""
                 todos = sorted(Supabase.client.from("todos").select().decodeList<Todo>())
+                refreshWidget()
             } catch (e: Exception) {
                 error = e.message ?: e.toString()
             } finally {
@@ -96,6 +113,7 @@ class TodosViewModel : ViewModel() {
     fun toggle(todo: Todo) {
         val newDone = !todo.done
         todos = sorted(todos.map { if (it.id == todo.id) it.copy(done = newDone) else it })
+        refreshWidget()
         viewModelScope.launch {
             try {
                 Supabase.client.from("todos").update({ set("done", newDone) }) {
@@ -111,9 +129,18 @@ class TodosViewModel : ViewModel() {
 
 @Composable
 fun TodoSection(vm: TodosViewModel = viewModel()) {
+    val context = LocalContext.current
     Column(Modifier.fillMaxWidth()) {
-        Text("To-dos", color = DeepBlue, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(10.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("To-dos", color = DeepBlue, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            TextButton(
+                onClick = { pinTodoWidget(context) },
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+            ) {
+                Text("+ home screen", color = SkyBlue, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
@@ -136,10 +163,7 @@ fun TodoSection(vm: TodosViewModel = viewModel()) {
                 onClick = { vm.add() },
                 enabled = !vm.busy && vm.draft.isNotBlank(),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DeepBlue,
-                    contentColor = CardWhite,
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = DeepBlue, contentColor = CardWhite),
             ) { Text("Add", fontWeight = FontWeight.Bold) }
         }
         Spacer(Modifier.height(12.dp))
@@ -159,6 +183,14 @@ fun TodoSection(vm: TodosViewModel = viewModel()) {
         vm.error?.let {
             Text("sync issue: $it", color = Color(0xFFB23A48), fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
         }
+    }
+}
+
+private fun pinTodoWidget(context: Context) {
+    val mgr = AppWidgetManager.getInstance(context)
+    val provider = ComponentName(context, TodoWidgetReceiver::class.java)
+    if (mgr.isRequestPinAppWidgetSupported) {
+        mgr.requestPinAppWidget(provider, null, null)
     }
 }
 
