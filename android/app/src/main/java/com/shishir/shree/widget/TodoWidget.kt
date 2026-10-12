@@ -100,12 +100,9 @@ class TodoWidget : GlanceAppWidget() {
     }
 
     companion object {
-        /** Fetch from Supabase, write into every widget instance's state, and re-render. */
-        suspend fun syncAll(context: Context) {
-            val todos = runCatching {
-                Supabase.client.from("todos").select().decodeList<Todo>().sortedBy { it.done }
-            }.getOrNull() ?: return
-            val json = AppJson.encodeToString(todos)
+        /** Push the app's current to-do list into every widget instance and re-render. */
+        suspend fun pushTodos(context: Context, todos: List<Todo>) {
+            val json = AppJson.encodeToString(todos.sortedBy { it.done })
             val widget = TodoWidget()
             GlanceAppWidgetManager(context).getGlanceIds(TodoWidget::class.java).forEach { gid ->
                 updateAppWidgetState(context, gid) { it[TodosKey] = json }

@@ -71,8 +71,9 @@ class TodosViewModel(app: Application) : AndroidViewModel(app) {
     private fun sorted(list: List<Todo>) = list.sortedBy { it.done }
 
     private fun refreshWidget() {
+        val snapshot = todos
         viewModelScope.launch {
-            runCatching { TodoWidget.syncAll(getApplication<Application>()) }
+            runCatching { TodoWidget.pushTodos(getApplication<Application>(), snapshot) }
         }
     }
 
