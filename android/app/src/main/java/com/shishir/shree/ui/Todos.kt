@@ -50,7 +50,6 @@ import com.shishir.shree.data.Todo
 import com.shishir.shree.ui.theme.CardWhite
 import com.shishir.shree.ui.theme.DeepBlue
 import com.shishir.shree.ui.theme.SkyBlue
-import androidx.glance.appwidget.updateAll
 import com.shishir.shree.widget.TodoWidget
 import com.shishir.shree.widget.TodoWidgetReceiver
 import io.github.jan.supabase.postgrest.from
@@ -73,7 +72,7 @@ class TodosViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun refreshWidget() {
         viewModelScope.launch {
-            runCatching { TodoWidget().updateAll(getApplication<Application>()) }
+            runCatching { TodoWidget.syncAll(getApplication<Application>()) }
         }
     }
 
