@@ -8,8 +8,12 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.lazy.LazyColumn
@@ -41,6 +45,22 @@ import io.github.jan.supabase.postgrest.from
 private val WDeep = Color(0xFF15528A)
 private val WCard = Color(0xFFFFFFFF)
 private val WDone = Color(0x7315528A)
+
+private val IdKey = ActionParameters.Key<String>("todo_id")
+private val DoneKey = ActionParameters.Key<Boolean>("todo_done")
+
+class ToggleTodoAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val id = parameters[IdKey] ?: return
+        val done = parameters[DoneKey] ?: false
+        runCatching {
+            Supabase.client.from("todos").update({ set("done", !done) }) {
+                filter { eq("id", id) }
+            }
+        }
+        TodoWidget().update(context, glanceId)
+    }
+}
 
 class TodoWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -90,7 +110,12 @@ private fun TodoLine(todo: Todo) {
             modifier = GlanceModifier
                 .fillMaxWidth()
                 .background(ImageProvider(R.drawable.widget_item))
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .clickable(
+                    actionRunCallback<ToggleTodoAction>(
+                        actionParametersOf(IdKey to todo.id, DoneKey to todo.done),
+                    ),
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
