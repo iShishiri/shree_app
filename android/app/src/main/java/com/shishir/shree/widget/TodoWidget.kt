@@ -2,7 +2,6 @@ package com.shishir.shree.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,10 +20,9 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.appwidget.updateAll
 import androidx.glance.background
-import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -36,6 +34,7 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
@@ -83,20 +82,20 @@ class ToggleTodoAction : ActionCallback {
 
 class TodoWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        // Compute the list here: read the cache, and on first load fetch and cache it.
+        // Render that value directly (reading it back through reactive state in the same
+        // pass doesn't reflect a just-written value). Every update() re-runs this, so
+        // optimistic toggles and app syncs re-render correctly from the cache.
+        var todos = decode(getAppWidgetState(context, PreferencesGlanceStateDefinition, id)[TodosKey])
+        if (todos == null) {
+            todos = runCatching {
+                Supabase.client.from("todos").select().decodeList<Todo>().sortedBy { it.done }
+            }.getOrNull()
+            todos?.let { t -> updateAppWidgetState(context, id) { it[TodosKey] = AppJson.encodeToString(t) } }
+        }
+        val data = todos
         provideContent {
-            val prefs = currentState<Preferences>()
-            val json = prefs[TodosKey]
-            // First load only: fetch into state. Once state exists, render it (so an
-            // optimistic toggle isn't overwritten by a re-fetch). App edits refresh via syncAll.
-            if (json == null) {
-                LaunchedEffect(Unit) {
-                    runCatching {
-                        val todos = Supabase.client.from("todos").select().decodeList<Todo>().sortedBy { it.done }
-                        updateAppWidgetState(context, id) { it[TodosKey] = AppJson.encodeToString(todos) }
-                    }
-                }
-            }
-            WidgetBody(decode(json), json == null)
+            WidgetBody(data, data == null)
         }
     }
 
@@ -107,10 +106,11 @@ class TodoWidget : GlanceAppWidget() {
                 Supabase.client.from("todos").select().decodeList<Todo>().sortedBy { it.done }
             }.getOrNull() ?: return
             val json = AppJson.encodeToString(todos)
+            val widget = TodoWidget()
             GlanceAppWidgetManager(context).getGlanceIds(TodoWidget::class.java).forEach { gid ->
                 updateAppWidgetState(context, gid) { it[TodosKey] = json }
+                widget.update(context, gid)
             }
-            TodoWidget().updateAll(context)
         }
     }
 }
