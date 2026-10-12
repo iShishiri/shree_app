@@ -7,11 +7,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.ImageProvider
+import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
-import androidx.glance.action.actionStartActivity
-import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
@@ -33,15 +33,14 @@ import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.shishir.shree.MainActivity
+import com.shishir.shree.R
 import com.shishir.shree.data.Supabase
 import com.shishir.shree.data.Todo
 import io.github.jan.supabase.postgrest.from
 
 private val WDeep = Color(0xFF15528A)
-private val WSky = Color(0xFF3FB4F3)
-private val WSoft = Color(0xFFDDEFFB)
-private val WCanvas = Color(0xFFF2FAFE)
 private val WCard = Color(0xFFFFFFFF)
+private val WDone = Color(0x7315528A)
 
 class TodoWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -59,7 +58,7 @@ private fun WidgetBody(todos: List<Todo>?, failed: Boolean) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(WCanvas)
+            .background(ImageProvider(R.drawable.widget_frame))
             .padding(14.dp)
             .clickable(actionStartActivity<MainActivity>()),
     ) {
@@ -67,7 +66,7 @@ private fun WidgetBody(todos: List<Todo>?, failed: Boolean) {
             "श्री · to-dos",
             style = TextStyle(color = ColorProvider(WDeep), fontSize = 15.sp, fontWeight = FontWeight.Bold),
         )
-        Spacer(GlanceModifier.height(10.dp))
+        Spacer(GlanceModifier.height(12.dp))
         when {
             failed -> Text(
                 "couldn't load — tap to open",
@@ -86,30 +85,35 @@ private fun WidgetBody(todos: List<Todo>?, failed: Boolean) {
 
 @Composable
 private fun TodoLine(todo: Todo) {
-    Row(
-        modifier = GlanceModifier.fillMaxWidth().padding(vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
+    Box(GlanceModifier.fillMaxWidth().padding(bottom = 8.dp)) {
+        Row(
             modifier = GlanceModifier
-                .size(18.dp)
-                .cornerRadius(5.dp)
-                .background(if (todo.done) WSky else WSoft),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .background(ImageProvider(R.drawable.widget_item))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (todo.done) {
-                Text("✓", style = TextStyle(color = ColorProvider(WCard), fontSize = 12.sp, fontWeight = FontWeight.Bold))
+            Box(
+                modifier = GlanceModifier
+                    .size(20.dp)
+                    .background(ImageProvider(if (todo.done) R.drawable.widget_check_on else R.drawable.widget_check_off)),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (todo.done) {
+                    Text("✓", style = TextStyle(color = ColorProvider(WCard), fontSize = 13.sp, fontWeight = FontWeight.Bold))
+                }
             }
+            Spacer(GlanceModifier.width(12.dp))
+            Text(
+                todo.body,
+                style = TextStyle(
+                    color = ColorProvider(if (todo.done) WDone else WDeep),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    textDecoration = if (todo.done) TextDecoration.LineThrough else TextDecoration.None,
+                ),
+            )
         }
-        Spacer(GlanceModifier.width(10.dp))
-        Text(
-            todo.body,
-            style = TextStyle(
-                color = ColorProvider(if (todo.done) Color(0x8015528A) else WDeep),
-                fontSize = 14.sp,
-                textDecoration = if (todo.done) TextDecoration.LineThrough else TextDecoration.None,
-            ),
-        )
     }
 }
 
